@@ -2,6 +2,8 @@ package com.tufanpirihan.akillikampusbildirim.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tufanpirihan.akillikampusbildirim.model.LoginRequest
+import com.tufanpirihan.akillikampusbildirim.repository.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,11 +16,14 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
             try {
-                // Geçici bir doğrulama
-                if(email.isNotEmpty() && password.isNotEmpty()) {
+                val response = RetrofitClient.apiService.login(
+                    LoginRequest(email, password)
+                )
+
+                if (response.isSuccessful && response.body() != null) {
                     _loginState.value = LoginState.Success
                 } else {
-                    _loginState.value = LoginState.Error("Geçersiz giriş bilgileri")
+                    _loginState.value = LoginState.Error("Giriş başarısız")
                 }
             } catch(e: Exception) {
                 _loginState.value = LoginState.Error(e.localizedMessage ?: "Bilinmeyen hata")
