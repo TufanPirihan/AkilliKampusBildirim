@@ -1,12 +1,10 @@
 package com.tufanpirihan.akillikampusbildirim.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,11 +16,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.tufanpirihan.akillikampusbildirim.viewmodel.AuthViewModel
+import com.tufanpirihan.akillikampusbildirim.viewmodel.LoginState
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    navController: NavHostController,
+    viewModel: AuthViewModel = viewModel()
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val loginState by viewModel.loginState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -100,7 +107,7 @@ fun LoginScreen() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Şifre Input
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -131,11 +138,13 @@ fun LoginScreen() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Giriş Butonu
             Button(
-                onClick = { /* Giriş işlemi */ },
+                onClick = {
+                    viewModel.login(email, password)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -149,6 +158,22 @@ fun LoginScreen() {
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold
                 )
+            }
+
+            // Login State göstergesi
+            when (val state = loginState) {
+                is LoginState.Loading -> CircularProgressIndicator(color = Color(0xFF2979FF))
+                is LoginState.Error -> Text(
+                    text = state.message,
+                    color = Color.Red,
+                    fontSize = 14.sp
+                )
+                is LoginState.Success -> Text(
+                    text = "Giriş Başarılı!",
+                    color = Color.Green,
+                    fontSize = 14.sp
+                )
+                else -> {}
             }
 
             // Şifremi Unuttum
@@ -166,17 +191,21 @@ fun LoginScreen() {
             }
 
             // Kayıt Linki
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                contentAlignment = Alignment.Center
+                horizontalArrangement = Arrangement.Center
             ) {
+
                 Text(
                     text = "Kayıt Ol",
                     color = Color(0xFF2979FF),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        navController.navigate("register")
+                    }
                 )
             }
         }
