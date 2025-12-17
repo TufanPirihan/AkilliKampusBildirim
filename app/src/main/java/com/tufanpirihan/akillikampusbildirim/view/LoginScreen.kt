@@ -31,6 +31,21 @@ fun LoginScreen(
 
     val loginState by viewModel.loginState.collectAsState()
 
+    // Login state kontrolü
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Success -> {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+            is LoginState.Error -> {
+                // Hata durumunda özel bir işlem yapmak isterseniz buraya ekleyebilirsiniz
+            }
+            else -> {}
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

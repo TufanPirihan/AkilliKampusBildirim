@@ -18,65 +18,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.tufanpirihan.akillikampusbildirim.model.Notification
-import com.tufanpirihan.akillikampusbildirim.model.NotificationStatus
+import com.tufanpirihan.akillikampusbildirim.viewmodel.NotificationViewModel
 import com.tufanpirihan.akillikampusbildirim.model.NotificationType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf<NotificationType?>(null) }
-
-    // Örnek bildirim listesi (gerçekte backend'den gelecek)
-    // Örnek bildirim listesi (gerçekte backend'den gelecek)
-    val notifications = remember {
-        listOf(
-            Notification(
-                id = "1",
-                title = "Kütüphane Acil Durum",
-                description = "Kütüphanede yangın alarmı çaldı",
-                type = NotificationType.SECURITY,
-                status = NotificationStatus.IN_PROGRESS,
-                location = com.tufanpirihan.akillikampusbildirim.model.Location(
-                    latitude = 40.0,
-                    longitude = 32.0,
-                    address = "Merkez Kütüphane"
-                ),
-                createdAt = "2 saat önce",
-                userId = "user1"
-            ),
-            Notification(
-                id = "2",
-                title = "İlk Yardım İhtiyacı",
-                description = "Kafeteryada bir öğrencinin ilk yardıma ihtiyacı var",
-                type = NotificationType.HEALTH,
-                status = NotificationStatus.OPEN,
-                location = com.tufanpirihan.akillikampusbildirim.model.Location(
-                    latitude = 40.0,
-                    longitude = 32.0,
-                    address = "Öğrenci Kafeteryası"
-                ),
-                createdAt = "30 dakika önce",
-                userId = "user2"
-            ),
-            Notification(
-                id = "3",
-                title = "Kayıp Cüzdan",
-                description = "Mavi renkli cüzdan kaybedildi",
-                type = NotificationType.LOST_FOUND,
-                status = NotificationStatus.RESOLVED,
-                location = com.tufanpirihan.akillikampusbildirim.model.Location(
-                    latitude = 40.0,
-                    longitude = 32.0,
-                    address = "A Blok"
-                ),
-                createdAt = "1 gün önce",
-                userId = "user3"
-            )
-        )
-    }
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: NotificationViewModel = viewModel()
+) {
+    val notifications by viewModel.notifications.collectAsState(initial = emptyList())
+    val searchQuery by viewModel.searchQuery.collectAsState(initial = "")
+    val selectedFilter by viewModel.selectedFilter.collectAsState(initial = null)
 
     Scaffold(
         topBar = {
@@ -104,7 +60,7 @@ fun HomeScreen(navController: NavHostController) {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Yeni bildirim oluştur */ },
+                onClick = { navController.navigate("create_notification") },
                 containerColor = Color(0xFF2979FF),
                 contentColor = Color.White
             ) {
@@ -122,7 +78,7 @@ fun HomeScreen(navController: NavHostController) {
             // Arama Kutusu
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = { viewModel.updateSearchQuery(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF1F1F1F), RoundedCornerShape(16.dp))
@@ -154,7 +110,7 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 FilterChip(
                     selected = selectedFilter == null,
-                    onClick = { selectedFilter = null },
+                    onClick = { viewModel.updateFilter(null) },
                     label = { Text("Tümü") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Color(0xFF2979FF),
@@ -162,8 +118,8 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
                 FilterChip(
-                    selected = selectedFilter == NotificationType.HEALTH,
-                    onClick = { selectedFilter = NotificationType.HEALTH },
+                    selected = selectedFilter?.name == "HEALTH",
+                    onClick = { viewModel.updateFilter(NotificationType.HEALTH) },
                     label = { Text("Sağlık") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Color(0xFF2979FF),
@@ -171,8 +127,8 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
                 FilterChip(
-                    selected = selectedFilter == NotificationType.SECURITY,
-                    onClick = { selectedFilter = NotificationType.SECURITY },
+                    selected = selectedFilter?.name == "SECURITY",
+                    onClick = { viewModel.updateFilter(NotificationType.SECURITY) },
                     label = { Text("Güvenlik") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Color(0xFF2979FF),
@@ -202,6 +158,7 @@ fun HomeScreen(navController: NavHostController) {
                     items(notifications) { notification ->
                         NotificationCard(notification = notification) {
                             // Bildirim detayına git
+                            navController.navigate("notification_detail/${notification.id}")
                         }
                     }
                 }
@@ -237,24 +194,26 @@ fun NotificationCard(
                     modifier = Modifier
                         .size(40.dp)
                         .background(
-                            when(notification.type) {
-                                NotificationType.HEALTH -> Color(0xFF4CAF50)
-                                NotificationType.SECURITY -> Color(0xFFF44336)
-                                NotificationType.ENVIRONMENT -> Color(0xFF8BC34A)
-                                NotificationType.LOST_FOUND -> Color(0xFFFF9800)
-                                NotificationType.TECHNICAL -> Color(0xFF2196F3)
+                            when(notification.type.uppercase()) {
+                                "SAĞLIK" -> Color(0xFF4CAF50)
+                                "GÜVENLİK" -> Color(0xFFF44336)
+                                "ÇEVRE" -> Color(0xFF8BC34A)
+                                "KAYIP-BULUNDU" -> Color(0xFFFF9800)
+                                "TEKNİK ARIZA" -> Color(0xFF2196F3)
+                                else -> Color.Gray
                             },
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        when(notification.type) {
-                            NotificationType.HEALTH -> "🏥"
-                            NotificationType.SECURITY -> "🚨"
-                            NotificationType.ENVIRONMENT -> "🌱"
-                            NotificationType.LOST_FOUND -> "🔍"
-                            NotificationType.TECHNICAL -> "🔧"
+                        when(notification.type.uppercase()) {
+                            "SAĞLIK" -> "🏥"
+                            "GÜVENLİK" -> "🚨"
+                            "ÇEVRE" -> "🌱"
+                            "KAYIP-BULUNDU" -> "🔍"
+                            "TEKNİK ARIZA" -> "🔧"
+                            else -> "❓"
                         },
                         fontSize = 20.sp
                     )
@@ -282,20 +241,22 @@ fun NotificationCard(
                 Box(
                     modifier = Modifier
                         .background(
-                            when(notification.status) {
-                                NotificationStatus.OPEN -> Color(0xFFFF9800)
-                                NotificationStatus.IN_PROGRESS -> Color(0xFF2196F3)
-                                NotificationStatus.RESOLVED -> Color(0xFF4CAF50)
+                            when(notification.status.uppercase()) {
+                                "AÇIK" -> Color(0xFFFF9800)
+                                "İNCELENİYOR" -> Color(0xFF2196F3)
+                                "ÇÖZÜLDÜ" -> Color(0xFF4CAF50)
+                                else -> Color.Gray
                             },
                             shape = RoundedCornerShape(8.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = when(notification.status) {
-                            NotificationStatus.OPEN -> "Açık"
-                            NotificationStatus.IN_PROGRESS -> "İnceleniyor"
-                            NotificationStatus.RESOLVED -> "Çözüldü"
+                        text = when(notification.status.uppercase()) {
+                            "AÇIK" -> "Açık"
+                            "İNCELENİYOR" -> "İnceleniyor"
+                            "ÇÖZÜLDÜ" -> "Çözüldü"
+                            else -> "Bilinmeyen"
                         },
                         color = Color.White,
                         fontSize = 12.sp

@@ -16,9 +16,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
             try {
-                val response = RetrofitClient.apiService.login(
-                    LoginRequest(email, password)
-                )
+                val response = RetrofitClient.apiService.login(LoginRequest(email, password))
 
                 if (response.isSuccessful && response.body() != null) {
                     _loginState.value = LoginState.Success

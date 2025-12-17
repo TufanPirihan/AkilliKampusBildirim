@@ -1,33 +1,27 @@
 package com.tufanpirihan.akillikampusbildirim.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Notification(
-    val id: String,
-    val title: String,
-    val description: String,
-    val type: NotificationType,
-    val status: NotificationStatus,
-    val location: Location,
-    val createdAt: String,
-    val userId: String,
-    val photos: List<String>? = null
+    @SerializedName("ID") val id: String,
+    @SerializedName("UserID") val userId: String,
+    @SerializedName("Title") val title: String,
+    @SerializedName("Description") val description: String,
+    @SerializedName("Type") val type: String, // String olarak değiştirildi
+    @SerializedName("Status") val status: String, // String olarak değiştirildi
+    @SerializedName("Location") val location: Location,
+    @SerializedName("CreatedAt") val createdAt: String
 )
 
 enum class NotificationType {
-    HEALTH,        // Sağlık
-    SECURITY,      // Güvenlik
-    ENVIRONMENT,   // Çevre
-    LOST_FOUND,    // Kayıp-Buluntu
-    TECHNICAL      // Teknik Arıza
+    HEALTH, SECURITY, ENVIRONMENT, LOST_FOUND, TECHNICAL
 }
 
 enum class NotificationStatus {
-    OPEN,          // Açık
-    IN_PROGRESS,   // İnceleniyor
-    RESOLVED       // Çözüldü
+    OPEN, IN_PROGRESS, RESOLVED
 }
 
 data class Location(
-    val latitude: Double,
-    val longitude: Double,
-    val address: String? = null
+    @SerializedName("Lat") val latitude: Double,
+    @SerializedName("Lng") val longitude: Double
 )
